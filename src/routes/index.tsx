@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, ArrowUp, Check, ChevronDown, Leaf, MapPin, Menu, Moon, RotateCw, Sun, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUp, Check, ChevronDown, Leaf, Menu, Moon, RotateCw, Sun, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
