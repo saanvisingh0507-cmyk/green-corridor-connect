@@ -1,0 +1,4 @@
+- [x] Build the single-page editorial layout, navigation, motion, and light/dark themes.
+- [x] Implement reusable synthetic-city generation, patch extraction, least-cost routing, and MST selection.
+- [x] Connect interactive maps, cost playground, comparison, metrics, and project guide.
+- [x] Verify desktop/mobile rendering and interactions.
