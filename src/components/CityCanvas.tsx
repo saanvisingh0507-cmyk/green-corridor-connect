@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { City, Network, WIDTH, HEIGHT } from '@/lib/corridor-simulation';
 
-type Props = { city: City; network: Network; showLand?: boolean; showPatches?: boolean; showCorridors?: boolean; interactive?: boolean; comparison?: boolean; split?: number; onPatch?: (id: number | null, x: number, y: number) => void; className?: string };
-const LAND_COLORS = ['#e6e0cc', '#6ba770', '#d6d6c9', '#aeb3aa', '#9ac5d4'];
-export function CityCanvas({ city, network, showLand = true, showPatches = true, showCorridors = true, interactive = false, comparison = false, split = 50, onPatch, className = '' }: Props) {
+type Props = { city: City; network: Network; showLand?: boolean; showPatches?: boolean; showCorridors?: boolean; interactive?: boolean; comparison?: boolean; split?: number; theme?: string; onPatch?: (id: number | null, x: number, y: number) => void; className?: string };
+const LAND_COLORS = ['--map-open', '--map-green-2', '--map-road', '--map-building', '--map-water'];
+export function CityCanvas({ city, network, showLand = true, showPatches = true, showCorridors = true, interactive = false, comparison = false, split = 50, theme, onPatch, className = '' }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [width, setWidth] = useState(800);
   useEffect(() => {
@@ -17,22 +17,23 @@ export function CityCanvas({ city, network, showLand = true, showPatches = true,
     const h = width * HEIGHT / WIDTH;
     canvas.width = Math.round(width * dpr); canvas.height = Math.round(h * dpr);
     const ctx = canvas.getContext('2d'); if (!ctx) return;
+    const colors = getComputedStyle(document.documentElement);
     ctx.setTransform(canvas.width / WIDTH, 0, 0, canvas.height / HEIGHT, 0, 0);
-    ctx.fillStyle = '#e6e0cc'; ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    ctx.fillStyle = colors.getPropertyValue('--map-open'); ctx.fillRect(0, 0, WIDTH, HEIGHT);
     if (showLand) {
       for (let i = 0; i < city.grid.length; i++) {
         const kind = city.grid[i];
         if (kind === 1) {
           const variation = city.variation[i] ?? 0;
-          ctx.fillStyle = variation > .68 ? '#4c8e5c' : variation > .59 ? '#69a46c' : '#83b57b';
-        } else ctx.fillStyle = LAND_COLORS[kind ?? 0] ?? LAND_COLORS[0] ?? "#e6e0cc";
+          ctx.fillStyle = colors.getPropertyValue(variation > .68 ? '--map-green-1' : variation > .59 ? '--map-green-2' : '--map-green-3');
+        } else ctx.fillStyle = colors.getPropertyValue(LAND_COLORS[kind ?? 0] ?? '--map-open');
         ctx.fillRect(i % WIDTH, Math.floor(i / WIDTH), 1.03, 1.03);
       }
     }
     if (showPatches) {
-      ctx.fillStyle = 'rgba(33, 118, 64, .25)';
+      ctx.fillStyle = colors.getPropertyValue('--map-patch-fill');
       for (const patch of city.patches) for (const cell of patch.cells) ctx.fillRect(cell % WIDTH, Math.floor(cell / WIDTH), 1, 1);
-      ctx.strokeStyle = '#165c36'; ctx.lineWidth = .18;
+      ctx.strokeStyle = colors.getPropertyValue('--map-patch-stroke'); ctx.lineWidth = .18;
       for (const patch of city.patches) for (const cell of patch.cells) {
         const x = cell % WIDTH, y = Math.floor(cell / WIDTH);
         if (x === 0 || city.patchAt[cell - 1] !== patch.id) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 1); ctx.stroke(); }
@@ -47,12 +48,12 @@ export function CityCanvas({ city, network, showLand = true, showPatches = true,
         if (!corridor.path.length) continue;
         const trace = () => { ctx.beginPath(); corridor.path.forEach((cell, i) => { const x = cell % WIDTH + .5, y = Math.floor(cell / WIDTH) + .5; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); };
         ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        trace(); ctx.strokeStyle = 'rgba(255,255,255,.93)'; ctx.lineWidth = 1.75; ctx.stroke();
-        trace(); ctx.strokeStyle = '#e07b1f'; ctx.lineWidth = .9; ctx.stroke();
+        trace(); ctx.strokeStyle = colors.getPropertyValue('--map-casing'); ctx.lineWidth = 1.75; ctx.stroke();
+        trace(); ctx.strokeStyle = colors.getPropertyValue('--map-corridor'); ctx.lineWidth = .9; ctx.stroke();
       }
       if (comparison) ctx.restore();
     }
-  }, [city, network, showLand, showPatches, showCorridors, comparison, split, width]);
+  }, [city, network, showLand, showPatches, showCorridors, comparison, split, width, theme]);
   const pointer = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (!interactive || !onPatch) return;
     const rect = event.currentTarget.getBoundingClientRect();

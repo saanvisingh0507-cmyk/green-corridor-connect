@@ -90,3 +90,17 @@
   .draw-path, .breathe { animation: none; stroke-dashoffset: 0; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Canvas colors are kept here so the map follows the site's light/dark palette. */
+:root {
+  --map-open: #e6e0cc; --map-green-1: #4c8e5c; --map-green-2: #69a46c; --map-green-3: #83b57b;
+  --map-road: #d6d6c9; --map-building: #aeb3aa; --map-water: #9ac5d4;
+  --map-patch-fill: rgba(33, 118, 64, .25); --map-patch-stroke: #165c36;
+  --map-casing: rgba(255,255,255,.93); --map-corridor: #e07b1f;
+}
+.dark {
+  --map-open: #494e43; --map-green-1: #346e4b; --map-green-2: #448158; --map-green-3: #569267;
+  --map-road: #777f73; --map-building: #5f6963; --map-water: #567e8b;
+  --map-patch-fill: rgba(116, 206, 133, .16); --map-patch-stroke: #a2dda5;
+  --map-casing: rgba(245,245,231,.92); --map-corridor: #f2a046;
+}
