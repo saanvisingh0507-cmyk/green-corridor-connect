@@ -112,7 +112,7 @@ function Home() {
   const results = useVisible<HTMLDivElement>();
   const city = useMemo(() => generateCity(seed), [seed]);
   const fullNetwork = useMemo(() => buildNetwork(city), [city]);
-  const network = useMemo(() => ({ ...fullNetwork, corridors: fullNetwork.candidates.slice(0, count), after: Math.max(city.patches.length - count, fullNetwork.after), lengthKm: fullNetwork.candidates.slice(0, count).reduce((sum, c) => sum + c.length, 0) / 1000, roadsCrossed: new Set(fullNetwork.candidates.slice(0, count).flatMap(c => c.path.filter(cell => city.grid[cell] === 2))).size, totalCost: fullNetwork.candidates.slice(0, count).reduce((sum, c) => sum + c.cost, 0) }), [city, fullNetwork, count]);
+  const network = useMemo(() => ({ ...fullNetwork, corridors: fullNetwork.candidates.slice(0, count), after: Math.max(city.patches.length - Math.min(count, fullNetwork.candidates.length), fullNetwork.after), lengthKm: fullNetwork.candidates.slice(0, count).reduce((sum, c) => sum + c.length, 0) / 1000, roadsCrossed: new Set(fullNetwork.candidates.slice(0, count).flatMap(c => c.path.filter(cell => city.grid[cell] === 2))).size, totalCost: fullNetwork.candidates.slice(0, count).reduce((sum, c) => sum + c.cost, 0) }), [city, fullNetwork, count]);
   const playground = useMemo(() => buildNetwork(city, resistance, Math.min(4, Math.max(0, city.patches.length - 1))), [city, resistance]);
   const resultsNetwork = fullNetwork;
   useEffect(() => { document.documentElement.classList.toggle('dark', dark); return () => document.documentElement.classList.remove('dark'); }, [dark]);
