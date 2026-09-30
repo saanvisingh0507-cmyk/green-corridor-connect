@@ -58,7 +58,7 @@ export function CityCanvas({ city, network, showLand = true, showPatches = true,
     const rect = event.currentTarget.getBoundingClientRect();
     const x = Math.min(WIDTH - 1, Math.max(0, Math.floor((event.clientX - rect.left) / rect.width * WIDTH)));
     const y = Math.min(HEIGHT - 1, Math.max(0, Math.floor((event.clientY - rect.top) / rect.height * HEIGHT)));
-    onPatch(city.patchAt[y * WIDTH + x] ?? -1, event.clientX - rect.left, event.clientY - rect.top);
+    onPatch(city.patchAt[y * WIDTH + x] ?? -1, Math.max(8, Math.min(event.clientX - rect.left + 14, rect.width - 202)), event.clientY - rect.top);
   };
   return <canvas ref={ref} className={`block w-full aspect-[8/5] ${interactive ? 'cursor-crosshair' : ''} ${className}`} role="img" aria-label={`Synthetic city map with ${city.patches.length} vegetation patches and ${network.corridors.length} ecological corridors`} onMouseMove={pointer} onClick={pointer} onMouseLeave={() => onPatch?.(null, 0, 0)} />;
 }

@@ -49,11 +49,22 @@ function SectionHead({ number, kicker, title, description }: { number: string; k
   return <div className="reveal mb-10 md:mb-14"><div className="flex items-center gap-4 mb-6"><span className="section-label">{number} / {kicker}</span><span className="h-px w-12 bg-primary/40" /></div><h2 className="display-type text-4xl sm:text-5xl md:text-6xl max-w-3xl">{title}</h2>{description && <p className="mt-6 text-muted-foreground leading-relaxed max-w-2xl text-base md:text-lg">{description}</p>}</div>;
 }
 function HeroArt() {
+  const art = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let frame = 0;
+    const move = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => { if (art.current) art.current.style.transform = `translate3d(0, ${Math.min(window.scrollY, 700) * .14}px, 0)`; });
+    };
+    window.addEventListener('scroll', move, { passive: true });
+    return () => { window.removeEventListener('scroll', move); cancelAnimationFrame(frame); };
+  }, []);
   const patches = [
     { cx: 115, cy: 250, rx: 72, ry: 44 }, { cx: 304, cy: 126, rx: 90, ry: 59 }, { cx: 441, cy: 350, rx: 63, ry: 53 },
     { cx: 681, cy: 135, rx: 83, ry: 53 }, { cx: 755, cy: 328, rx: 110, ry: 68 }, { cx: 970, cy: 215, rx: 78, ry: 48 },
   ];
-  return <svg viewBox="0 0 1100 460" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full opacity-70 dark:opacity-50" aria-hidden="true">
+  return <svg ref={art} viewBox="0 0 1100 460" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full opacity-70 dark:opacity-50" aria-hidden="true">
     <defs><pattern id="map-grid" width="31" height="31" patternUnits="userSpaceOnUse"><path d="M 31 0 L 0 0 0 31" fill="none" stroke="currentColor" strokeOpacity=".09" strokeWidth="1" /></pattern><pattern id="map-dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".65" fill="currentColor" opacity=".12" /></pattern></defs>
     <rect width="1100" height="460" fill="url(#map-grid)" />
     <path d="M0 76 C175 108 169 88 321 62 S615 75 758 45 S976 76 1100 55 M0 400 C162 357 196 390 320 401 S580 373 739 402 S947 378 1100 409" fill="none" stroke="currentColor" strokeOpacity=".1" strokeWidth="12" />
