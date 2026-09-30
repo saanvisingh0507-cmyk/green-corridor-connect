@@ -51,14 +51,14 @@ export function generateCity(seed: number): City {
     if (grid[i] !== 1 || visited[i]) continue;
     const queue = [i]; visited[i] = 1;
     for (let q = 0; q < queue.length; q++) {
-      const p = queue[q], x = p % WIDTH, y = Math.floor(p / WIDTH);
+      const p = queue[q] ?? i, x = p % WIDTH, y = Math.floor(p / WIDTH);
       const neighbors = [x > 0 ? p - 1 : -1, x < WIDTH - 1 ? p + 1 : -1, y > 0 ? p - WIDTH : -1, y < HEIGHT - 1 ? p + WIDTH : -1];
       for (const next of neighbors) if (next >= 0 && grid[next] === 1 && !visited[next]) { visited[next] = 1; queue.push(next); }
     }
     if (queue.length < 18) continue;
     const cx = queue.reduce((sum, p) => sum + p % WIDTH, 0) / queue.length;
     const cy = queue.reduce((sum, p) => sum + Math.floor(p / WIDTH), 0) / queue.length;
-    let center = queue[0], best = Infinity;
+    let center = queue[0] ?? i, best = Infinity;
     for (const p of queue) { const d = (p % WIDTH - cx) ** 2 + (Math.floor(p / WIDTH) - cy) ** 2; if (d < best) { best = d; center = p; } }
     const id = patches.length;
     for (const p of queue) patchAt[p] = id;
@@ -73,8 +73,24 @@ export function generateCity(seed: number): City {
 }
 class MinHeap {
   private data: [number, number][] = [];
-  push(item: [number, number]) { const a = this.data; let i = a.length; a.push(item); while (i > 0) { const p = (i - 1) >> 1; if (a[p][0] <= item[0]) break; a[i] = a[p]; i = p; } a[i] = item; }
-  pop(): [number, number] | undefined { const a = this.data; if (!a.length) return; const first = a[0], last = a.pop(); if (a.length && last) { let i = 0; while (i * 2 + 1 < a.length) { let c = i * 2 + 1; if (c + 1 < a.length && a[c + 1][0] < a[c][0]) c++; if (a[c][0] >= last[0]) break; a[i] = a[c]; i = c; } a[i] = last; } return first; }
+  push(item: [number, number]) {
+    const a = this.data; a.push(item); let i = a.length - 1;
+    while (i > 0) { const p = (i - 1) >> 1; const parent = a[p]; if (!parent || parent[0] <= item[0]) break; a[i] = parent; i = p; }
+    a[i] = item;
+  }
+  pop(): [number, number] | undefined {
+    const a = this.data; const first = a[0]; if (!first) return undefined;
+    const last = a.pop(); if (!last || !a.length) return first;
+    let i = 0;
+    while (i * 2 + 1 < a.length) {
+      let c = i * 2 + 1;
+      const left = a[c], right = a[c + 1];
+      if (right && left && right[0] < left[0]) c++;
+      const child = a[c]; if (!child || child[0] >= last[0]) break;
+      a[i] = child; i = c;
+    }
+    a[i] = last; return first;
+  }
   get size() { return this.data.length; }
 }
 function cellCost(land: number, r: Resistances) { return land === 1 ? r.vegetation : land === 2 ? r.road : land === 3 ? r.building : land === 4 ? r.water : r.open; }
@@ -82,31 +98,32 @@ function route(city: City, from: number, to: number, resistance: Resistances): O
   const dist = new Float64Array(city.grid.length).fill(Infinity);
   const prev = new Int32Array(city.grid.length).fill(-1);
   const heap = new MinHeap(); dist[from] = 0; heap.push([0, from]);
-  const dirs = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
+  const dirs: [number, number][] = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
   while (heap.size) {
     const current = heap.pop(); if (!current) break;
     const [cost, p] = current;
-    if (cost > dist[p]) continue;
+    if (cost > (dist[p] ?? Infinity)) continue;
     if (p === to) break;
     const x = p % WIDTH, y = Math.floor(p / WIDTH);
     for (const [dx, dy] of dirs) {
       const nx = x + dx, ny = y + dy;
       if (nx < 0 || nx >= WIDTH || ny < 0 || ny >= HEIGHT) continue;
       const next = ny * WIDTH + nx;
-      const step = Math.hypot(dx, dy) * (cellCost(city.grid[p], resistance) + cellCost(city.grid[next], resistance)) / 2;
+      const step = Math.hypot(dx, dy) * (cellCost(city.grid[p] ?? 0, resistance) + cellCost(city.grid[next] ?? 0, resistance)) / 2;
       const candidate = cost + step;
-      if (candidate < dist[next]) { dist[next] = candidate; prev[next] = p; heap.push([candidate, next]); }
+      if (candidate < (dist[next] ?? Infinity)) { dist[next] = candidate; prev[next] = p; heap.push([candidate, next]); }
     }
   }
-  if (!Number.isFinite(dist[to])) return null;
+  if (!Number.isFinite(dist[to] ?? Infinity)) return null;
   const path: number[] = []; let length = 0, roads = 0;
-  for (let p = to; p !== -1; p = prev[p]) {
+  for (let p = to; p !== -1; p = prev[p] ?? -1) {
     path.push(p);
     if (city.grid[p] === 2) roads++;
-    if (prev[p] !== -1) length += Math.hypot(p % WIDTH - prev[p] % WIDTH, Math.floor(p / WIDTH) - Math.floor(prev[p] / WIDTH)) * CELL_METERS;
+    const prior = prev[p] ?? -1;
+    if (prior !== -1) length += Math.hypot(p % WIDTH - prior % WIDTH, Math.floor(p / WIDTH) - Math.floor(prior / WIDTH)) * CELL_METERS;
   }
   path.reverse();
-  return { path, cost: dist[to], length, roads };
+  return { path, cost: dist[to] ?? Infinity, length, roads };
 }
 export function buildNetwork(city: City, resistance: Resistances = DEFAULT_RESISTANCE, limit?: number): Network {
   const pairs = new Set<string>();
@@ -116,13 +133,14 @@ export function buildNetwork(city: City, resistance: Resistances = DEFAULT_RESIS
   });
   const candidates: Corridor[] = [];
   for (const pair of pairs) {
-    const [a, b] = pair.split('-').map(Number);
-    const found = route(city, city.patches[a].center, city.patches[b].center, resistance);
+    const [a = 0, b = 0] = pair.split('-').map(Number);
+    const start = city.patches[a], end = city.patches[b]; if (!start || !end) continue;
+    const found = route(city, start.center, end.center, resistance);
     if (found) candidates.push({ a, b, ...found });
   }
   candidates.sort((a, b) => a.cost - b.cost);
   const parent = city.patches.map((_, i) => i);
-  const root = (i: number): number => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+  const root = (i: number): number => { while (parent[i] !== i) { parent[i] = parent[parent[i] ?? i] ?? i; i = parent[i]; } return i; };
   const mst: Corridor[] = [];
   for (const edge of candidates) {
     const a = root(edge.a), b = root(edge.b);
