@@ -140,7 +140,7 @@ export function buildNetwork(city: City, resistance: Resistances = DEFAULT_RESIS
   }
   candidates.sort((a, b) => a.cost - b.cost);
   const parent = city.patches.map((_, i) => i);
-  const root = (i: number): number => { while (parent[i] !== i) { parent[i] = parent[parent[i] ?? i] ?? i; i = parent[i]; } return i; };
+  const root = (i: number): number => { while (parent[i] !== i) { parent[i] = parent[parent[i] ?? i] ?? i; i = parent[i] ?? i; } return i; };
   const mst: Corridor[] = [];
   for (const edge of candidates) {
     const a = root(edge.a), b = root(edge.b);
@@ -148,7 +148,7 @@ export function buildNetwork(city: City, resistance: Resistances = DEFAULT_RESIS
   }
   const selected = mst.slice(0, limit ?? mst.length);
   const components = city.patches.map((_, i) => i);
-  const componentRoot = (i: number): number => { while (components[i] !== i) i = components[i]; return i; };
+  const componentRoot = (i: number): number => { while (components[i] !== i) i = components[i] ?? i; return i; };
   for (const edge of selected) components[componentRoot(edge.a)] = componentRoot(edge.b);
   const crossed = new Set<number>();
   for (const edge of selected) for (const cell of edge.path) if (city.grid[cell] === 2) crossed.add(cell);

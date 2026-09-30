@@ -23,9 +23,9 @@ export function CityCanvas({ city, network, showLand = true, showPatches = true,
       for (let i = 0; i < city.grid.length; i++) {
         const kind = city.grid[i];
         if (kind === 1) {
-          const variation = city.variation[i];
+          const variation = city.variation[i] ?? 0;
           ctx.fillStyle = variation > .68 ? '#4c8e5c' : variation > .59 ? '#69a46c' : '#83b57b';
-        } else ctx.fillStyle = LAND_COLORS[kind];
+        } else ctx.fillStyle = LAND_COLORS[kind ?? 0] ?? LAND_COLORS[0] ?? "#e6e0cc";
         ctx.fillRect(i % WIDTH, Math.floor(i / WIDTH), 1.03, 1.03);
       }
     }
